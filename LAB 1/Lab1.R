@@ -145,34 +145,25 @@ print(confMatrixTrue)
 ################################################################################
 ## Task 3
 
-# mbTest <- mb(HC_BN_test,
-#              node = "S")
 mbTrue <- mb(fitTrue,
              node = "S")
 
 print(mbTrue)
 
-# predMbTest <- predictNet(fitTrueJunctionTree,
-#                          asia.test,
-#                          mbTest,
-#                          targetVar)
 
 predMbTrue <- predictNet(fitTrueJunctionTree,
                          asia.test,
                          mbTrue,
                          targetVar)
 
-# confMatrixMbTest <- table(predMbTest,
-#                           asia.test$s)
 
-# confMatrixMbTrue <- table(predMbTrue,
-#                           asia.test$s)
+confMatrixMbTrue <- table(predMbTrue,
+                         asia.test$s)
 
 # This gives error:
 # "all arguments must have the same length" ???
 
-# print(confMatrixMbTest)
-# print(confMatrixMbTrue)
+print(confMatrixMbTrue)
 
 
 ################################################################################
