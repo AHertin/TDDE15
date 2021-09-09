@@ -66,20 +66,16 @@ cpdag(HC_3)
 
 ################################################################################
 ## Task 2
+
 predictNet <- function(juncTree, data, features, target){
   predArray <- matrix(nrow = nrow(data),
                       ncol = 1)
   
-  for(i in 1:nrow(data)){
+  for (i in 1:nrow(data)) {
     obsStates <- NULL
-    for(p in features){
-      if(data[i,p] == "yes"){
-        obsStates <- c(obsStates,"yes")
-      } else{
-        obsStates <- c(obsStates,"no")
-      }
+    for (j in features) {
+      obsStates[j] <- if(data[i, j] == "yes") "yes" else "no"
     }
-    
     
     obsEvidence <- setEvidence(object = juncTree,
                                nodes = features,
@@ -118,14 +114,14 @@ fitTest <- bn.fit(HC_BN_test,
 fitTrue <- bn.fit(HC_BN_true,
                   asia.train)
 
-fitTestTable = as.grain(fitTest)
-fitTrueTable = as.grain(fitTrue)
+grainTest <- as.grain(fitTest)
+grainTrue <- as.grain(fitTrue)
 
-fitTestJunctionTree = compile(fitTestTable)
-fitTrueJunctionTree = compile(fitTrueTable)
+fitTestJunctionTree <- compile(grainTest)
+fitTrueJunctionTree <- compile(grainTrue)
 
 observedVars = c("A", "T", "L", "B", "E", "X", "D")
-targetVar   = c("S")
+targetVar    = c("S")
 
 predTest <- predictNet(fitTestJunctionTree,
                        asia.test,
@@ -133,16 +129,75 @@ predTest <- predictNet(fitTestJunctionTree,
                        targetVar)
 
 predTrue <- predictNet(fitTestJunctionTree,
-                      asia.test,
-                      observedVars,
-                      targetVar)
+                       asia.test,
+                       observedVars,
+                       targetVar)
 
-confMatrixTest <- table(predTest, asia.test$S)
-confMatrixTrue <- table(predTrue, asia.test$S)
+confMatrixTest <- table(predTest, 
+                        asia.test$S)
+
+confMatrixTrue <- table(predTrue, 
+                        asia.test$S)
 
 print(confMatrixTest)
 print(confMatrixTrue)
 
+################################################################################
+## Task 3
+
+# mbTest <- mb(HC_BN_test,
+#              node = "S")
+mbTrue <- mb(fitTrue,
+             node = "S")
+
+print(mbTrue)
+
+# predMbTest <- predictNet(fitTrueJunctionTree,
+#                          asia.test,
+#                          mbTest,
+#                          targetVar)
+
+predMbTrue <- predictNet(fitTrueJunctionTree,
+                         asia.test,
+                         mbTrue,
+                         targetVar)
+
+# confMatrixMbTest <- table(predMbTest,
+#                           asia.test$s)
+
+# confMatrixMbTrue <- table(predMbTrue,
+#                           asia.test$s)
+
+# This gives error:
+# "all arguments must have the same length" ???
+
+# print(confMatrixMbTest)
+# print(confMatrixMbTrue)
+
+
+################################################################################
+## Task 4
+
+set.seed(1)
+
+naiveBN <- model2network("[S][A|S][T|S][L|S][B|S][E|S][X|S][D|S]")
+
+fitNaive <- bn.fit(naiveBN,
+                   asia.train)
+
+grainNaive <- as.grain(fitNaive)
+
+junctionNaive <- compile(grainNaive)
+
+predNaive <- predictNet(junctionNaive,
+                        asia.test,
+                        observedVars,
+                        targetVar)
+
+confMatrixNaive <- table(predNaive,
+                         asia.test$s)
+
+print(confMatrixNaive)
 
 
 
