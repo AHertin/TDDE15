@@ -1,0 +1,136 @@
+---
+title: "LAB 2"
+author: "Andreas Hertin"
+date: '2021-09-16'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(10)
+library(HMM)
+
+```
+
+The purpose of the lab is to put in practice some of the concepts covered in the lectures.
+To do so, you are asked to model the behavior of a robot that walks around a ring. The ring is
+divided into 10 sectors. At any given time point, the robot is in one of the sectors and decides
+with equal probability to stay in that sector or move to the next sector. You do not have direct
+observation of the robot. However, the robot is equipped with a tracking device that you can
+access. The device is not very accurate though: If the robot is in the sector i, then the device
+will report that the robot is in the sectors [i − 2, i + 2] with equal probability
+
+## (1)
+
+Build a hidden Markov model (HMM) for the scenario described above.
+
+```{r}
+
+states = 1:10
+symbols = 1:10
+
+# Create transition matrix to match description
+transMatrix <- diag(0.5, 10)
+transMatrix[10, 1] = 0.5
+diag(transMatrix[, -1]) = 0.5
+
+emissMatrix <- matrix(0,10,10)
+
+startMatrix <- rep(0.1,10)
+
+
+for(i in 1:10){
+  # get Y values that should be filled with 0.2
+  lowerBound = i - 2
+  upperBound = i + 2
+  y_fill = lowerBound:upperBound%%10
+  # Change 0 indexes to 10
+  y_fill[y_fill == 0] = 10
+  # Fill matrix by (i,y_fill) indexes with 0.2
+  emissMatrix[i, y_fill] = 0.2
+}
+
+transMatrix
+emissMatrix
+startMatrix
+
+hmmModel <- initHMM(States = states, Symbols = symbols, startProb = startMatrix, transProbs = transMatrix, emissionProbs = emissMatrix)
+hmmModel
+
+```
+
+
+## (2)
+
+Simulate the HMM for 100 time steps.
+
+```{r}
+
+N = 100
+
+hmmModel.sim <- simHMM(hmm = hmmModel, length = N)
+
+hmmModel.sim$states
+hmmModel.sim$observation
+
+```
+
+
+## (3)
+
+Discard the hidden states from the sample obtained above. Use the remaining observations to compute the filtered and smoothed probability distributions for each of the
+100 time points. Compute also the most probable path.
+
+```{r}
+
+alpha <- exp(forward(hmmModel, hmmModel.sim$observation))
+beta <- exp(backward(hmmModel, hmmModel.sim$observation))
+
+filterFunc = function(HMM, a, N){
+  out = matrix(0, 10, N)
+  for(i in 1:N){
+    out[, i] = a[, i] / sum(a[, i])
+  }
+  return(out)
+}
+
+smoothFunc = function(HMM, a, b, N){
+  out = matrix(0, 10, N)
+  for(i in 1:N){
+    out[, i] = b[, i] * a[, i] / sum(b[, i] * a[, i])
+  }
+  return(out)
+}
+
+filtered <- filterFunc(hmmModel, alpha, N)
+smoothed <- smoothFunc(hmmModel.sim, alpha, beta, N)
+mostProbablePath <- viterbi(hmmModel, hmmModel.sim$observation)
+mostProbablePath
+
+```
+
+
+## (4)
+
+Compute the accuracy of the filtered and smoothed probability distributions, and of the
+most probable path. That is, compute the percentage of the true hidden states that are
+guessed by each method.
+
+**Hint**: Note that the function ``forward()`` in the ``HMM`` package returns probabilities in log
+scale. You may need to use the functions ``exp()`` and ``prop.table()`` in order to obtain a
+normalized probability distribution. You may also want to use the functions ``apply()`` and
+``which.max()`` to find out the most probable states. Finally, recall that you can compare
+two vectors A and B elementwise as A==B, and that the function ``table()`` will count the
+number of times that the different elements in a vector occur in the vector.
+
+
+```{r}
+
+
+
+```
+
+
+
+
