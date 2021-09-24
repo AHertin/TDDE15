@@ -81,7 +81,7 @@ Discard the hidden states from the sample obtained above. Use the remaining obse
 alpha <- exp(forward(hmmModel, hmmModel.sim$observation))
 beta <- exp(backward(hmmModel, hmmModel.sim$observation))
 
-filterFunc <- function(HMM, a, N){
+filterFunc <- function(a, N){
   out = matrix(0, 10, N)
   for(i in 1:N){
     out[, i] = a[, i] / sum(a[, i])
@@ -89,16 +89,17 @@ filterFunc <- function(HMM, a, N){
   return(out)
 }
 
-smoothFunc <- function(HMM, a, b, N){
+smoothFunc <- function(a, b, N){
   out = matrix(0, 10, N)
   for(i in 1:N){
+    
     out[, i] = b[, i] * a[, i] / sum(b[, i] * a[, i])
   }
   return(out)
 }
 
-filtered <- filterFunc(hmmModel, alpha, N)
-smoothed <- smoothFunc(hmmModel.sim, alpha, beta, N)
+filtered <- filterFunc(alpha, N)
+smoothed <- smoothFunc(alpha, beta, N)
 mostProbablePath <- viterbi(hmmModel, hmmModel.sim$observation)
 mostProbablePath
 
@@ -156,8 +157,8 @@ simulateAccuracy <- function(HMM, N){
   alpha <- exp(forward(HMM, HMM.sim$observation))
   beta <- exp(backward(HMM, HMM.sim$observation))
   
-  filtered <- filterFunc(HMM, alpha, N)
-  smoothed <- smoothFunc(HMM.sim, alpha, beta, N)
+  filtered <- filterFunc(alpha, N)
+  smoothed <- smoothFunc(alpha, beta, N)
   
   mostProbablePath <- viterbi(HMM, HMM.sim$observation)
   
@@ -188,7 +189,7 @@ for(n in 1:nSim){
 }
 
 # Plots of accuracy distribution for different amount of observations
-plot(density(accuracyMatrix_25[, 1]), main = paste("Acccuracy distributions for 25 observations (simulated 100 times)"), font.main = 1, cex.main = 0.8, xlim=c(0.2,1), xlab="Accuracy", ylim=c(0,10), sub="black - Base, red - Smoothed, green - Filtered")
+plot(density(accuracyMatrix_25[, 1]), main = "Acccuracy distributions for 25 observations (simulated 100 times)", font.main = 1, cex.main = 0.8, xlim=c(0.2,1), xlab="Accuracy", ylim=c(0,10), sub="black - Base, red - Smoothed, green - Filtered")
 lines(density(accuracyMatrix_25[, 2]), col="red")
 lines(density(accuracyMatrix_25[, 3]), col="green")
 
@@ -196,7 +197,7 @@ plot(density(accuracyMatrix_50[, 1]), main = "Acccuracy distributions for 50 obs
 lines(density(accuracyMatrix_50[, 2]), col="red")
 lines(density(accuracyMatrix_50[, 3]), col="green")
 
-plot(density(accuracyMatrix_200[, 1]), main = paste("Acccuracy distributions for 200 observations (simulated 100 times)"), font.main = 1, cex.main = 0.8, xlim=c(0.2,1), xlab="Accuracy", ylim=c(0,10), sub="black - Base, red - Smoothed, green - Filtered")
+plot(density(accuracyMatrix_200[, 1]), main = "Acccuracy distributions for 200 observations (simulated 100 times)", font.main = 1, cex.main = 0.8, xlim=c(0.2,1), xlab="Accuracy", ylim=c(0,10), sub="black - Base, red - Smoothed, green - Filtered")
 lines(density(accuracyMatrix_200[, 2]), col="red")
 lines(density(accuracyMatrix_200[, 3]), col="green")
 
@@ -222,25 +223,19 @@ eHMM.sim <- simHMM(hmm = eHMM, length = n)
 alpha <- exp(forward(eHMM, eHMM.sim$observation))
 beta <- exp(backward(eHMM, eHMM.sim$observation))
 
-eFiltered <- filterFunc(eHMM, alpha, n)
+eFiltered <- filterFunc(alpha, n)
 
-eFilteredPred <- apply(eFiltered, MARGIN = 2, which.max)
+entropyOut = rep(0,n)
 
-entropyOut = rep(0,200)
-
-for(f in 1:length(eFilteredPred)){
-  entropyOut[f] <- entropy.empirical(table(factor(eFilteredPred[1:f])))
+for(i in 1:n){
+  entropyOut[i] <- entropy.empirical(eFiltered[,i], unit="log2")
 }
 
-plot(entropyOut, type = "l", main = "Entropy from 0-250 observations", xlab = "N observations", ylab = "Entropy")
-
-plot(density(accuracyMatrix_25[, 2]), main = paste("Smoothing accuracy distribution for different number of observations"), font.main = 1, cex.main = 0.8, xlim=c(0.2,1), xlab="Accuracy", ylim=c(0,10), sub="black - 25, red - 50, green - 200")
-lines(density(accuracyMatrix_50[, 2]), col="red")
-lines(density(accuracyMatrix_200[, 2]), col="green")
+plot(entropyOut, type = "p", main = "Entropy from 0-250 observations", xlab = "N observations", ylab = "Entropy")
 
 ```
 
-Entropy converges just before 50 observations and higher entropy = more disorder. Accuracy does not increase with number of observations as seen in the last plot, but it does increase precision.
+There is no downward trend in entropy over 250 observations. We gain no extra information for more observations that could increase it.
 
 
 ## (7)
