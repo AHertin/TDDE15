@@ -204,7 +204,9 @@ lines(density(accuracyMatrix_200[, 3]), col="green")
 
 ```
 
-No matter number of observations the same order of accuracy is seen. This is logical because filter takes alpha (forward observations) and smoothing uses both alpha and beta (backward observations).
+No matter number of observations the same order of accuracy is seen. 
+
+When running multiple simulations for different number of observations the same order of accuracies can be observed. Alpha uses previous observations to predict the current one, beta uses the future observations. The seen distributions are then logical because filter uses alpha and smoothing uses both alpha and beta and therefore has more information. The viterbi-function for most-probable-path instead tries to estimate the whole path as a sequence instead of each individual state so it does not get the same accuracy for the individual states. 
 
 
 ## (6)
